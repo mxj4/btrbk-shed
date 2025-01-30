@@ -17,7 +17,10 @@ use Notify;
 my $notify_user = $ENV{NOTIFY_USER};
 my $summary = "Snapshot";
 my $command = qq(btrbk -c $ENV{CONF_PATH} snapshot --preserve 2>&1);
-my $notify_id = Notify::start($notify_user, $summary, qq($command\n\nIn progress ...));
+my $notify_id = Notify::start($notify_user, $summary, qq(
+    $command
+    In progress ...
+));
 
 my $result = qx($command);
 if ($? != 0) {
@@ -30,4 +33,6 @@ if ($? != 0) {
     die $error_message;
 }
 
-Notify::end($notify_user, $notify_id, $summary, $result);
+#say $result;
+
+Notify::end($notify_user, $notify_id, $summary, "Done.\n" . $result);

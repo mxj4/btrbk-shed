@@ -30,4 +30,4 @@ if ($? != 0) {
     die $error_message;
 }
 
-Notify::end($notify_user, $notify_id, $summary, $result);
+Notify::end($notify_user, $notify_id, $summary, "Done.\n" . $result);

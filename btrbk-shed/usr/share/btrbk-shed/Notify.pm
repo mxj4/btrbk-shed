@@ -16,9 +16,10 @@ sub compile_dbus_msg ($notify_id, $summary, $body, $critical = false, $timeout =
     state $hints = qq({
         'desktop-entry': <'$app_name'>
     });
+    my $escaped_body = "'" . $body . "'";
     # gdbus command is in glib2 package
-    my $command = qq(gdbus call --session --dest=org.freedesktop.Notifications --object-path=/org/freedesktop/Notifications --method=org.freedesktop.Notifications.Notify "$app_name" $notify_id "$msg_icon_name" "$summary" "$body" "$actions" "$hints" $timeout);
-    #say $command;
+    my $command = qq(gdbus call --session --dest=org.freedesktop.Notifications --object-path=/org/freedesktop/Notifications --method=org.freedesktop.Notifications.Notify "$app_name" $notify_id "$msg_icon_name" "$summary" "$escaped_body" "$actions" "$hints" $timeout);
+    say $command;
     return $command
 }
 
