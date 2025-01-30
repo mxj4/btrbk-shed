@@ -9,14 +9,15 @@ BEGIN {
     my $script_path = $0;
     my ($script_dir) = $script_path =~ m{^(.*)/}; # extract the directory part
     $script_dir = '.' unless defined $script_dir;
-    unshift @INC, "$script_dir/../share/btrbk-shed"; # our modules
+    unshift @INC, "$script_dir/../share/btrbk-shed/site_perl";
 }
 
 use Notify;
 
 my $notify_user = $ENV{NOTIFY_USER};
+my $conf_path = $ENV{CONF_PATH};
 my $summary = "Snapshot";
-my $command = qq(btrbk -c $ENV{CONF_PATH} snapshot --preserve 2>&1);
+my $command = qq(btrbk -c $conf_path snapshot --preserve 2>&1);
 my $notify_id = Notify::start($notify_user, $summary, qq(
     $command
     In progress ...

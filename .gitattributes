@@ -1,2 +1,2 @@
 btrbk-shed/usr/bin/btrbk-shed-btrbk -diff linguist-vendored=true
-btrbk-shed/usr/share/btrbk-shed/lib/** -diff linguist-vendored=true
+btrbk-shed/usr/share/btrbk-shed/vendor_perl/** -diff linguist-vendored=true

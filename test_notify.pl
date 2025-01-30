@@ -9,7 +9,7 @@ BEGIN {
     my $script_path = $0;
     my ($script_dir) = $script_path =~ m{^(.*)/}; # extract the directory part
     $script_dir = '.' unless defined $script_dir;
-    unshift @INC, "$script_dir/btrbk-shed/usr/share/btrbk-shed"; # our modules
+    unshift @INC, "$script_dir/btrbk-shed/usr/share/btrbk-shed/site_perl"; # our modules
 }
 
 use Notify;

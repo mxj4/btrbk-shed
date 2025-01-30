@@ -16,8 +16,10 @@ popd
 
 # install File::Rsync
 pushd usr/share/btrbk-shed
-cpanm --pureperl --no-man-pages --notest --local-lib-contained ./ File::Rsync
+cpanm --pureperl --no-man-pages --notest --local-lib-contained . File::Rsync
 rm -rf ./lib/perl5/x86_64-linux-thread-multi
+mv ./lib/perl5 ./vendor_perl
+rmdir ./lib
 popd
 
 popd
