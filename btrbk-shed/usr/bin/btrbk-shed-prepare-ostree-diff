@@ -1,0 +1,125 @@
+#! /usr/bin/env perl
+
+use v5.40;
+use strict;
+use warnings;
+
+# Support Fedora's minimal Perl installation
+BEGIN {
+    my $script_path = $0;
+    my ($script_dir) = $script_path =~ m{^(.*)/}; # extract the directory part
+    $script_dir = '.' unless defined $script_dir;
+    unshift @INC, "$script_dir/../share/btrbk-shed/lib/perl5"; # 3rd party modules
+    unshift @INC, "$script_dir/../share/btrbk-shed"; # our modules
+}
+
+use Notify;
+use File::Rsync;
+use File::Path qw(make_path);
+
+state $destination = "/home/ostree_diff";
+
+sub rsync_etc_diff {
+    my $final_msg = "";
+
+    # Process the input file and create the rsync file list
+
+    my $input_file = qq($destination/ostree_config_diff);
+    my $rsync_list = qq($destination/etc_rsync_file_list);
+    
+    open my $in_fh, '<', $input_file or die "Can't open $input_file: $!";
+    open my $out_fh, '>', $rsync_list or die "Can't open $rsync_list: $!";
+
+    while (my $line = <$in_fh>) {
+        chomp $line;
+        my @fields = split /\s+/, $line;
+
+        # Construct the full path
+        my $path = "/etc/$fields[1]";
+
+        # Check conditions and print if they are met
+        if ((-f $path || -l $path) && 
+            !($line =~ /^D/ || $line =~ /selinux\/targeted\/tmp/)) {
+            print $out_fh "$path\n";
+        }
+    }
+
+    close $in_fh;
+    close $out_fh;
+
+    # execute rsync
+
+    my $rsync = File::Rsync->new({
+        archive => 1,
+        hard_links => 1,
+        acls => 1,
+        xattrs => 1,
+        stats => 1,
+        'files-from' => $rsync_list,
+    });
+
+    my $output;
+    my $success = $rsync->exec(
+        src => '/',
+        dest => qq($destination/rsync),
+        outfun => sub { $output .= shift . "\n" },
+        errfun => sub { $output .= shift . "\n" },
+    );
+
+    return $output;
+}
+
+sub main {
+    make_path($destination, { chmod=>0644 });
+    my $notify_user = $ENV{NOTIFY_USER};
+    my $summary = "Prepare ostree diff";
+    my $notify_id = Notify::start($notify_user, $summary, "Started ...");
+
+    my $final_msg = "";
+    for my $task (
+        ["Getting rpm-ostree status", "rpm_ostree_status", sub { qx(rpm-ostree status -v) }],
+        ["Getting rpm-ostree history", "rpm_ostree_history", sub { qx(rpm-ostree ex history -v) }],
+        ["Getting kernel arguments", "kernel_args", sub { qx(cat /proc/cmdline) }],
+        ["Getting ostree config diff", "ostree_config_diff", sub { qx(ostree admin config-diff) }],
+        # append `|| true` to your command to ignore non-zero error code
+        ["Getting detailed /etc diff", "detailed_etc_diff", sub { qx(diff -yrW200 --suppress-common-lines /usr/etc /etc 2>&1 || true) }],
+        ["Saving changed config files", undef, \&rsync_etc_diff],
+    ) {
+        my ($desc, $log_file, $func) = @$task;
+        my ($log_path, $msg_body) = (undef, "In progress ...");
+        if ($log_file) {
+            $log_path = "$destination/$log_file";
+            $msg_body = "Writing to $log_path ...";
+        }
+        Notify::update($notify_user, $notify_id, $desc, $msg_body);
+
+        my $result = $func->();
+        if ($? != 0) {
+            my $exit_code = $? >> 8;
+            my $signal = $? & 127;
+            my $error_message = "$desc failed with exit code $exit_code";
+            $error_message .= " (signal $signal)" if $signal;
+            Notify::end($notify_user, $notify_id, $summary, $final_msg . $error_message, true);
+            die $error_message;
+        }
+
+        $final_msg .= "$desc ...\n\n";
+        if ($log_path) {
+            # The previous diff should have been backed up, hence overwrite here
+            open(my $fh, '>', $log_path) or do {
+                my $error_message = "Could not open file $log_file $!";
+                Notify::end($notify_user, $notify_id, $summary, $final_msg . $error_message, true);
+                die $error_message
+            };
+            print $fh $result;
+            close $fh;
+        } else {
+            $final_msg .= "$result\n\n";
+        }
+    }
+    $final_msg .= "Done.\n";
+
+    Notify::end($notify_user, $notify_id, $summary, $final_msg);
+}
+
+main();
