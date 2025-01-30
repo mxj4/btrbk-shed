@@ -1,0 +1,33 @@
+#! /usr/bin/env perl
+
+use v5.40;
+use strict;
+use warnings;
+
+# Support Fedora's minimal Perl installation
+BEGIN {
+    my $script_path = $0;
+    my ($script_dir) = $script_path =~ m{^(.*)/}; # extract the directory part
+    $script_dir = '.' unless defined $script_dir;
+    unshift @INC, "$script_dir/../share/btrbk-shed"; # our modules
+}
+
+use Notify;
+
+my $notify_user = $ENV{NOTIFY_USER};
+my $summary = "Snapshot";
+my $command = qq(btrbk -c $ENV{CONF_PATH} snapshot --preserve 2>&1);
+my $notify_id = Notify::start($notify_user, $summary, qq($command\n\nIn progress ...));
+
+my $result = qx($command);
+if ($? != 0) {
+    my $exit_code = $? >> 8;
+    my $signal = $? & 127;
+    my $error_message = "$summary failed with exit code $exit_code";
+    $error_message .= " (signal $signal)" if $signal;
+    $error_message .= "\n$result\n";
+    Notify::end($notify_user, $notify_id, $summary, $error_message, true);
+    die $error_message;
+}
+
+Notify::end($notify_user, $notify_id, $summary, $result);

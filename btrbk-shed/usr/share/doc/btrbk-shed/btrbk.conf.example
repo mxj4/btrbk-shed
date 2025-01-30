@@ -1,0 +1,18 @@
+snapshot_dir		.snapshots
+timestamp_format	long
+stream_compress		zstd
+transaction_log		/var/log/btrbk-shed.log
+stream_buffer		256m
+
+preserve_hour_of_day	13
+preserve_day_of_week	sunday
+snapshot_preserve_min	48h
+snapshot_preserve	14d 8w 6m 1y
+
+volume /
+  snapshot_dir /var/.snapshots
+  target MOUNT_POINT_OF_YOUR_EXTERNAL_BACKUP/YOUR_BACKUP_FOLDER
+  subvolume /home
+    snapshot_name home
+  subvolume /var/log
+    snapshot_name log
