@@ -1,0 +1,21 @@
+[Unit]
+Description=Transfer recent snapshots to mounted storage
+# If the backup service was triggered around the same time as the snapshot service,
+# we want backup happen after snapshot
+After=btrbk-shed-snapshot.service
+PartOf=btrbk-shed.target
+
+[Service]
+# Before enabling btrbk-shed, override all environment variables listed here
+Environment=NOTIFY_USER=
+Environment=CONF_PATH=
+# Set to the mount point of your ackup storage
+RequiresMountsFor=
+
+# The backup service should be triggered after mount.
+# If your backup destination is always mounted, create your own trigger such as a timer.
+Type=oneshot
+ExecCondition=/bin/sh -c '[ -s "${CONF_PATH}" ]'
+ExecStart=/usr/bin/btrbk-shed-backup
+StartLimitIntervalSec=2d
+StartLimitBurst=2

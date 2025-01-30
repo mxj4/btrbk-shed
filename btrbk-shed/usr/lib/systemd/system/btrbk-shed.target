@@ -1,0 +1,7 @@
+[Unit]
+Description=Parent systemd target for btrbk-shed, \
+enable this for the whole system to start on next boot.
+Wants=btrbk-shed-snapshot.timer btrbk-shed-backup.service
+
+[Install]
+WantedBy=multi-user.target

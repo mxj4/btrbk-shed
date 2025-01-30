@@ -1,0 +1,15 @@
+[Unit]
+Description=Run btrbk-shed-snapshot on schedule
+PartOf=btrbk-shed.target
+
+[Timer]
+# By default, run snapshot daily at 8AM with 0-10min delay
+OnCalendar=*-*-* 08:00:00
+# Avoid immediate execution on boot when previous schdules were missed.
+RandomizedDelaySec=10m
+Persistent=true
+RemainAfterElapse=true
+Unit=btrbk-shed-snapshot.service
+
+[Install]
+WantedBy=timers.target
