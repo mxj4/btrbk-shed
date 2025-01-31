@@ -3,8 +3,10 @@ Description=Take btrbk snapshots under the same Btrfs system.
 PartOf=btrbk-shed.target
 
 [Service]
+# Before enabling btrbk-shed, override all environment variables listed here
 Environment=NOTIFY_USER=
 Environment=CONF_PATH=
+
 Type=oneshot
 ExecCondition=/bin/sh -c '[ -s "${CONF_PATH}" ]'
 # Override this to prepare your backup source using custom logic.
