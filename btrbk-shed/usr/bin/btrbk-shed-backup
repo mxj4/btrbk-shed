@@ -17,19 +17,20 @@ use Notify;
 my $notify_user = $ENV{NOTIFY_USER};
 my $conf_path = $ENV{CONF_PATH};
 my $summary = "Backup";
-my $command = qq(btrbk -c $conf_path resume --preserve-backups 2>&1);
+my $command = qq(btrbk-shed-btrbk -c $conf_path resume --preserve-backups 2>&1);
 my $notify_id = Notify::start($notify_user, $summary, qq(
     $command
     In progress ...
 ));
 
+# TODO: handle other execution errors, such as command not found
 my $result = qx($command);
 if ($? != 0) {
     my $exit_code = $? >> 8;
     my $signal = $? & 127;
     my $error_message = "$summary failed with exit code $exit_code";
     $error_message .= " (signal $signal)" if $signal;
-    $error_message .= "\n$result\n";
+    #$error_message .= "\n$result\n";
     Notify::end($notify_user, $notify_id, $summary, $error_message, true);
     die $error_message;
 }
