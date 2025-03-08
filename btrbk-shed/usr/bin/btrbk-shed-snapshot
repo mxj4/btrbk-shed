@@ -17,7 +17,7 @@ use Notify;
 my $notify_user = $ENV{NOTIFY_USER};
 my $conf_path = $ENV{CONF_PATH};
 my $summary = "Snapshot";
-my $command = qq(btrbk -c $conf_path snapshot --preserve 2>&1);
+my $command = qq(btrbk-shed-btrbk -c $conf_path snapshot --preserve 2>&1);
 my $notify_id = Notify::start($notify_user, $summary, qq(
     $command
     In progress ...
